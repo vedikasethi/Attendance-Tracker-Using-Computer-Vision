@@ -1,0 +1,7 @@
+opencv-python
+numpy
+mtcnn
+keras-facenet
+faiss-cpu
+mysql-connector-python
+Pillow
