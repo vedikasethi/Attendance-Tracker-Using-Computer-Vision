@@ -8,15 +8,23 @@ from keras_facenet import FaceNet
 import threading
 from mtcnn import MTCNN  # For face detection
 from datetime import datetime
+<<<<<<< HEAD
 import time
 import numpy as np 
 import faiss  # Import FAISS for similarity search
 import csv  # For saving attendance records to a CSV file
+=======
+import faiss
+import mysql.connector
+import ast
+
+>>>>>>> eb04807524f13f1b104e5f9871f11db0d117aa0a
 
 # Initialize detector and embedder
 detector = MTCNN()
 embedder = FaceNet()
 
+<<<<<<< HEAD
 # Database configuration
 DB_CONFIG = {
     "host": "127.0.0.1",
@@ -91,6 +99,9 @@ def reload_database():
 attendance_marked = set()
 students_within_one_hour = []
 
+=======
+# Function to load embeddings from the specified path
+>>>>>>> eb04807524f13f1b104e5f9871f11db0d117aa0a
 def load_embeddings():
     #Load face embeddings from MySQL and create FAISS index.
     conn = mysql.connector.connect(
@@ -106,6 +117,7 @@ def load_embeddings():
 
     embeddings = []
     names = []
+<<<<<<< HEAD
     sapids = []
     rollnos = []
 
@@ -137,6 +149,34 @@ def find_closest_match(embedding, faiss_index, names):
     else:
         return "Unknown"
 
+=======
+
+    # Connect to MySQL
+    conn = mysql.connector.connect(
+        host="localhost",
+        user="user123",
+        password="root",
+        database="attendance"
+    )
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT name, embedding FROM face_embeddings")
+    for name, embedding_str in cursor.fetchall():
+        embedding = np.array(ast.literal_eval(embedding_str), dtype=float)
+        names.append(name)
+        embeddings.append(embedding)
+
+    conn.close()
+
+    embeddings = np.array(embeddings)
+    index = faiss.IndexFlatL2(embeddings.shape[1])
+    index.add(embeddings)
+
+    return index, names
+
+
+# Function to recognize faces and mark attendance
+>>>>>>> eb04807524f13f1b104e5f9871f11db0d117aa0a
 def start_face_recognition():
     # Start the webcam and run real-time face recognition.
     faiss_index, names, sapids, rollnos = load_embeddings()
@@ -154,6 +194,7 @@ def start_face_recognition():
         faces = detector.detect_faces(frame)
         if faces:
             face_images = []
+<<<<<<< HEAD
             face_boxes = []
 
             for face in faces:
@@ -170,11 +211,22 @@ def start_face_recognition():
 
                 face_images.append(face_img)
                 face_boxes.append((x1, y1, x2, y2))
+=======
+            for face in faces:
+                x1, y1, width, height = face['box']
+                x1, y1 = abs(x1), abs(y1)
+                x2, y2 = x1 + width, y1 + height
+                face_img = frame[y1:y2, x1:x2]
+                face_img = cv2.resize(face_img, (160, 160))
+                face_img = cv2.cvtColor(face_img, cv2.COLOR_BGR2RGB)
+                face_images.append(face_img)
+>>>>>>> eb04807524f13f1b104e5f9871f11db0d117aa0a
 
             embeddings = embedder.embeddings(face_images)
 
             for i, embedding in enumerate(embeddings):
                 name = find_closest_match(embedding, faiss_index, names)
+<<<<<<< HEAD
                 sapid = sapids[names.index(name)] if name != "Unknown" else None
 
                 if name != "Unknown" and name not in attendance_marked:
@@ -183,9 +235,33 @@ def start_face_recognition():
                     recognised_faces.append({"name": name, "sapid": sapid, "rollno": rollno, "timestamp": timestamp})
                     attendance_marked.add(name)
                     log_messages.append((f"Marked: {name} ({sapid})", log_timeout))
+=======
+
+                if name != "Unknown" and name not in attendance_marked:
+                    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+                    # Insert attendance into MySQL
+                    try:
+                        conn = mysql.connector.connect(**MYSQL_CONFIG)
+                        cursor = conn.cursor()
+                        cursor.execute(
+                            "INSERT INTO attendance (name, timestamp) VALUES (%s, %s)",
+                            (name, timestamp)
+                        )
+                        conn.commit()
+                        cursor.close()
+                        conn.close()
+                        print(f"Attendance marked for {name} at {timestamp}.")
+                        attendance_marked.add(name)
+
+                    except mysql.connector.Error as err:
+                        print(f"MySQL Error: {err}")
+
+>>>>>>> eb04807524f13f1b104e5f9871f11db0d117aa0a
                 elif name == "Unknown":
                     log_messages.append(("Unknown Face", log_timeout))
 
+<<<<<<< HEAD
                 # Draw bounding box and label
                 x1, y1, x2, y2 = face_boxes[i]
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
@@ -199,6 +275,11 @@ def start_face_recognition():
                 log_messages.pop(0)
             else:
                 log_messages[0] = (msg, timeout - 1)
+=======
+                x1, y1, width, height = faces[i]['box']
+                cv2.rectangle(frame, (x1, y1), (x2, y1 + height), (0, 255, 0), 2)
+                cv2.putText(frame, f"{name}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+>>>>>>> eb04807524f13f1b104e5f9871f11db0d117aa0a
 
         cv2.imshow("Face Recognition", frame)
 
@@ -245,3 +326,8 @@ def start_gui():
 
 start_gui()
 
+<<<<<<< HEAD
+=======
+
+start_face_recognition()
+>>>>>>> eb04807524f13f1b104e5f9871f11db0d117aa0a
