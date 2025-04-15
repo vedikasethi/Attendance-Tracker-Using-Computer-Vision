@@ -1,0 +1,12 @@
+opencv-python
+numpy
+mtcnn
+keras-facenet
+faiss-cpu
+mysql-connector-python
+Pillow
+mysql-connector-python
+pandas
+openpyxl
+tensorflow
+scipy
